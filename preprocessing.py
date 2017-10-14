@@ -338,3 +338,16 @@ class StandardNANScaler(BaseEstimator, TransformerMixin):
             if self.with_mean:
                 X += self.mean_
         return X
+
+
+def _test_nanscalers(data):
+    scaler = StandardNANScaler()
+    scaler.fit(data)
+    df = pd.DataFrame(scaler.transform(data), columns=data.columns)
+    assert (df.isnull() == data.isnull()).all().all()
+    assert np.allclose(df.mean(), 0)
+
+    df = pd.DataFrame(nanscale(data), columns=data.columns)
+    assert (df.isnull() == data.isnull()).all().all()
+    assert np.allclose(df.mean(), 0)
+    return True
