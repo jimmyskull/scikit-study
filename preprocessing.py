@@ -4,6 +4,7 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Eric Martin <eric@ericmart.in>
 #          Giorgio Patrini <giorgio.patrini@anu.edu.au>
+#          Paulo Urio <paulourio gmail>
 # License: BSD 3 clause
 import warnings
 
@@ -14,7 +15,7 @@ from sklearn.preprocessing.data import check_array, FLOAT_DTYPES, \
     _handle_zeros_in_scale
 
 
-def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
+def nanscale(X, axis=0, with_mean=True, with_std=True, copy=True):
     """Standardize a dataset along any axis
     Center to the mean and component wise scale to unit variance.
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
@@ -55,7 +56,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     """  # noqa
     X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
                     warn_on_dtype=True, estimator='the scale function',
-                    dtype=FLOAT_DTYPES)
+                    force_all_finite=False, dtype=FLOAT_DTYPES)
     if sparse.issparse(X):
         if with_mean:
             raise ValueError(
@@ -71,9 +72,9 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     else:
         X = np.asarray(X)
         if with_mean:
-            mean_ = np.mean(X, axis)
+            mean_ = np.nanmean(X, axis)
         if with_std:
-            scale_ = np.std(X, axis)
+            scale_ = np.nanstd(X, axis)
         # Xr is a view on the original array that enables easy use of
         # broadcasting on the axis in which we are interested in
         Xr = np.rollaxis(X, axis)
@@ -85,7 +86,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             # precision of mean_. In this case, a pre-scaling of the
             # concerned feature is efficient, for instance by its mean or
             # maximum.
-            if not np.allclose(mean_1, 0):
+            if not np.allclose(mean_1[np.isfinite(mean_1)], 0):
                 warnings.warn("Numerical issues were encountered "
                               "when centering the data "
                               "and might not be solved. Dataset may "
@@ -102,7 +103,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
                 # if mean_1 was close to zero. The problem is thus essentially
                 # due to the lack of precision of mean_. A solution is then to
                 # subtract the mean again:
-                if not np.allclose(mean_2, 0):
+                if not np.allclose(mean_2[np.isfinite(mean_1)], 0):
                     warnings.warn("Numerical issues were encountered "
                                   "when scaling the data "
                                   "and might not be solved. The standard "
